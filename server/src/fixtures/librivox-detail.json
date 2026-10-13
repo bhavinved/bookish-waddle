@@ -1,0 +1,42 @@
+{
+ "books": [
+  {
+   "id": "253",
+   "title": "Pride and Prejudice",
+   "description": "<em>Pride and Prejudice</em> is the most famous of Jane Austen’s novels, and its opening is one of the most famous lines in English literature - “It is a truth universally acknowledged, that a single ",
+   "authors": [
+    {
+     "id": "155",
+     "first_name": "Jane",
+     "last_name": "Austen",
+     "dob": "1775",
+     "dod": "1817"
+    }
+   ],
+   "totaltimesecs": 47204,
+   "sections": [
+    {
+     "id": "124135",
+     "section_number": "1",
+     "title": "Chapters 1-3",
+     "listen_url": "https://www.archive.org/download/pride_and_prejudice_librivox/prideandprejudice_01-03_austen_64kb.mp3",
+     "playtime": "1132"
+    },
+    {
+     "id": "124136",
+     "section_number": "2",
+     "title": "Chapters 4-5",
+     "listen_url": "https://www.archive.org/download/pride_and_prejudice_librivox/prideandprejudice_04-05_austen_64kb.mp3",
+     "playtime": "865"
+    },
+    {
+     "id": "124137",
+     "section_number": "3",
+     "title": "Chapter 6",
+     "listen_url": "https://www.archive.org/download/pride_and_prejudice_librivox/prideandprejudice_06_austen_64kb.mp3",
+     "playtime": "777"
+    }
+   ]
+  }
+ ]
+}

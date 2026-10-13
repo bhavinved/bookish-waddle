@@ -1,18 +1,15 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { Readable } from 'node:stream';
+import { createAddonHandler } from './addons.ts';
+import { json, pipeResponse } from './http.ts';
 import { KINDS, type DebridKind, type DebridProvider } from './torbox.ts';
 
 const FILE_ROUTE = /^\/api\/debrid\/file\/([a-z]+)\/(\d{1,12})\/(\d{1,12})$/;
 // Headers copied from the upstream response so <audio> seeking works.
 const PASS_THROUGH = ['content-type', 'content-length', 'content-range', 'accept-ranges'];
 
-function json(res: ServerResponse, status: number, body: unknown) {
-  res.writeHead(status, { 'content-type': 'application/json' });
-  res.end(JSON.stringify(body));
-}
-
 /** `provider` is null when no API key is configured. */
 export function createHandler(provider: DebridProvider | null, fetchFn: typeof fetch = fetch) {
+  const addons = createAddonHandler(fetchFn);
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     try {
       // DNS-rebinding guard: only answer requests addressed to localhost (port ignored).
@@ -20,6 +17,8 @@ export function createHandler(provider: DebridProvider | null, fetchFn: typeof f
       if (host !== 'localhost' && host !== '127.0.0.1') return json(res, 403, { error: 'forbidden_host' });
       const path = new URL(req.url ?? '/', 'http://localhost').pathname;
       if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
+
+      if (await addons(req, res, new URL(req.url ?? '/', 'http://localhost'))) return;
 
       if (path === '/api/debrid/status') return json(res, 200, { configured: provider !== null });
 
@@ -35,15 +34,7 @@ export function createHandler(provider: DebridProvider | null, fetchFn: typeof f
         res.on('close', () => abort.abort());
         const range = req.headers.range;
         const up = await fetchFn(link, { headers: range ? { range } : {}, signal: abort.signal });
-        const headers: Record<string, string> = {};
-        for (const h of PASS_THROUGH) {
-          const v = up.headers.get(h);
-          if (v) headers[h] = v;
-        }
-        res.writeHead(up.status, headers);
-        if (!up.body) return void res.end();
-        Readable.fromWeb(up.body as never).on('error', () => res.destroy()).pipe(res);
-        return;
+        return pipeResponse(up, res, PASS_THROUGH);
       }
       json(res, 404, { error: 'not_found' });
     } catch (e) {

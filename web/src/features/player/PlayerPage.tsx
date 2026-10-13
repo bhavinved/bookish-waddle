@@ -13,7 +13,8 @@ export function PlayerPage() {
   useEffect(() => {
     void load(id);
   }, [id, load]);
-  const cover = useObjectUrl(p.book?.coverBlob);
+  const blobCover = useObjectUrl(p.book?.coverBlob);
+  const cover = blobCover ?? p.book?.coverUrl;
 
   if (p.error) {
     return (

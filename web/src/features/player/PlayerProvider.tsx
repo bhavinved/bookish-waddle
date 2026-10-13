@@ -11,7 +11,7 @@ import {
 import { db, getProgress, saveProgress, touchBook, type Book, type Chapter } from '../../core/db';
 import { audioLocator } from '../../core/locator';
 import { openSource, type BookSource } from '../../core/source';
-import { chapterIndexAt, clampRate, singleChapter } from './playerLogic';
+import { chapterIndexAt, clampRate, nextTrack, resumePoint, singleChapter, trackedProgress } from './playerLogic';
 
 export interface PlayerApi {
   book: Book | null;
@@ -55,6 +55,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rate, setRateState] = useState(1);
+  // Multi-track books: index of the file being played. Single-file books derive the chapter from the position.
+  const [track, setTrack] = useState(0);
+  const trackRef = useRef(0);
+  trackRef.current = track;
 
   const bookRef = useRef<Book | null>(null);
   bookRef.current = book;
@@ -65,15 +69,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   );
   const chaptersRef = useRef(chapters);
   chaptersRef.current = chapters;
-  const chapterIndex = chapterIndexAt(chapters, position);
+  const chapterIndex = book?.multiTrack ? track : chapterIndexAt(chapters, position);
 
   const persist = useCallback(() => {
     const audio = audioRef.current;
     const b = bookRef.current;
     if (!audio || !b) return;
     const dur = Number.isFinite(audio.duration) ? audio.duration : (b.durationSec ?? 0);
-    const idx = chapterIndexAt(chaptersRef.current, audio.currentTime);
-    void saveProgress(b.id, audioLocator(audio.currentTime, dur, idx));
+    const idx = b.multiTrack ? trackRef.current : chapterIndexAt(chaptersRef.current, audio.currentTime);
+    const loc = audioLocator(audio.currentTime, dur, idx);
+    void saveProgress(
+      b.id,
+      b.multiTrack ? { ...loc, progress: trackedProgress(chaptersRef.current, idx, audio.currentTime) } : loc,
+    );
     lastSaveRef.current = Date.now();
   }, []);
 
@@ -101,15 +109,40 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const setRate = useCallback((r: number) => {
     const v = clampRate(r);
     setRateState(v);
-    if (audioRef.current) audioRef.current.playbackRate = v;
+    if (audioRef.current) {
+      // defaultPlaybackRate survives src changes (track switches); playbackRate alone is reset by them.
+      audioRef.current.defaultPlaybackRate = v;
+      audioRef.current.playbackRate = v;
+    }
+  }, []);
+
+  /** Multi-track books: load track `i` into the audio element and optionally start it. */
+  const switchTrack = useCallback(async (i: number, startAt = 0, autoplay = true) => {
+    const audio = audioRef.current;
+    const source = sourceRef.current;
+    if (!audio || !source || !chaptersRef.current[i]) return;
+    const token = loadTokenRef.current;
+    const url = await source.getUrl(i);
+    if (token !== loadTokenRef.current) return;
+    audio.src = url;
+    trackRef.current = i;
+    setTrack(i);
+    setPosition(startAt);
+    setDuration(chaptersRef.current[i]?.duration ?? 0);
+    if (startAt > 0) {
+      audio.addEventListener('loadedmetadata', () => (audio.currentTime = startAt), { once: true });
+    }
+    if (autoplay) void audio.play().catch(() => setPlaying(false));
   }, []);
 
   const goChapter = useCallback(
     (i: number) => {
       const c = chaptersRef.current[i];
-      if (c) seek(c.start);
+      if (!c) return;
+      if (bookRef.current?.multiTrack) void switchTrack(i);
+      else seek(c.start);
     },
-    [seek],
+    [seek, switchTrack],
   );
 
   const close = useCallback(() => {
@@ -127,6 +160,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setPlaying(false);
     setPosition(0);
     setDuration(0);
+    setTrack(0);
   }, [persist]);
 
   const load = useCallback(
@@ -142,7 +176,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         const b = await db.books.get(bookId);
         if (!b || b.format !== 'audio') throw new Error('Audiobook not found');
         const source = await openSource(b);
-        const url = await source.getUrl();
+        const saved = await getProgress(bookId);
+        const resume = resumePoint(saved, !!b.multiTrack, b.chapters?.length ?? 0);
+        const url = await source.getUrl(b.multiTrack ? resume.track : undefined);
         if (token !== loadTokenRef.current) {
           source.release();
           return;
@@ -151,14 +187,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         sourceRef.current?.release();
         sourceRef.current = source;
         audio.src = url;
+        audio.defaultPlaybackRate = rate;
         audio.playbackRate = rate;
-        const saved = await getProgress(bookId);
-        const resumeAt = saved?.type === 'audio' ? saved.seconds : 0;
+        const resumeAt = resume.seconds;
+        trackRef.current = resume.track;
+        setTrack(resume.track);
         setBook(b);
         setPosition(resumeAt);
-        setDuration(b.durationSec ?? 0);
+        setDuration(b.multiTrack ? (b.chapters?.[resume.track]?.duration ?? 0) : (b.durationSec ?? 0));
         setPlaying(false);
-            const applyResume = () => {
+        const applyResume = () => {
           if (resumeAt > 0) audio.currentTime = resumeAt;
         };
         if (audio.readyState >= 1) applyResume();
@@ -190,6 +228,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       persist();
     };
     const onEnded = () => {
+      const next = bookRef.current?.multiTrack ? nextTrack(chaptersRef.current.length, trackRef.current) : null;
+      if (next !== null) {
+        void switchTrack(next);
+        return;
+      }
       setPlaying(false);
       persist();
     };
@@ -212,7 +255,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener('error', onErr);
       window.removeEventListener('pagehide', persist);
     };
-  }, [persist]);
+  }, [persist, switchTrack]);
 
   // MediaSession (lock screen / media keys)
   const coverBlob = book?.coverBlob;

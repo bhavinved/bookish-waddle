@@ -1,17 +1,27 @@
 import Dexie, { type EntityTable } from 'dexie';
+import type { Manifest, Stream } from './addon';
 import type { Locator } from './locator';
 
 export type BookFormat = 'epub' | 'pdf' | 'txt' | 'md' | 'audio';
 
 export interface Chapter {
   title: string;
-  /** Start time in seconds (audio chapters). */
+  /** Start time in seconds (audio chapters). For multi-track books: offset of the track in the whole book. */
   start: number;
+  /** Multi-track books only: length of this track in seconds, when the add-on said. */
+  duration?: number;
 }
 
 export interface SourceRef {
   kind: 'local' | 'debrid' | 'addon';
   id: string;
+  /** Add-on books: the stream the user picked, stored as-is so nothing has to be re-resolved. */
+  stream?: Stream;
+}
+
+export interface InstalledAddon {
+  baseUrl: string;
+  manifest: Manifest;
 }
 
 export interface Book {
@@ -20,12 +30,19 @@ export interface Book {
   author: string;
   format: BookFormat;
   coverBlob?: Blob;
+  /** Remote cover (add-on poster); used when there is no coverBlob. */
+  coverUrl?: string;
   sourceRef: SourceRef;
   addedAt: number;
   lastOpenedAt: number;
   /** Audio only: total duration in seconds and chapter list (M4B), when known. */
   durationSec?: number;
   chapters?: Chapter[];
+  /**
+   * Audio only: each chapter is its own file (add-on `tracks`). The audio Locator is then
+   * { chapter: track index, seconds: position inside that track }; for single-file books `seconds` is file-absolute.
+   */
+  multiTrack?: boolean;
 }
 
 export interface StoredFile {
@@ -46,6 +63,7 @@ export class BookishDB extends Dexie {
   books!: EntityTable<Book, 'id'>;
   files!: EntityTable<StoredFile, 'id'>;
   progress!: EntityTable<ProgressRecord, 'bookId'>;
+  addons!: EntityTable<InstalledAddon, 'baseUrl'>;
 
   constructor(name = 'bookish-waddle') {
     super(name);
@@ -54,6 +72,8 @@ export class BookishDB extends Dexie {
       files: 'id',
       progress: 'bookId, updatedAt',
     });
+    // v2: user-installed add-ons (built-ins are not stored).
+    this.version(2).stores({ addons: 'baseUrl' });
   }
 }
 

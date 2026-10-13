@@ -1,3 +1,4 @@
+import type { Stream } from './addon';
 import { db, type Book } from './db';
 import { mimeFor } from './formats';
 
@@ -17,8 +18,9 @@ export interface BookSource {
    * Lifecycle convention (we chose `release()` over returned cleanup callbacks): URLs handed out by
    * `getUrl()` stay valid until the source's `release()` is called. Whoever opened the source calls
    * `release()` when done with it. Repeated getUrl() calls return the same URL while it is still valid.
+   * Multi-track sources (add-on audiobooks) take a track index; other sources ignore it.
    */
-  getUrl(): Promise<string>;
+  getUrl(track?: number): Promise<string>;
   /** Frees resources (revokes object URLs). Safe to call multiple times. */
   release(): void;
 }
@@ -102,7 +104,41 @@ export class DebridSource implements BookSource {
   release(): void {}
 }
 
-/** Resolves a stored book to a BookSource. M3 extends this switch for add-ons. */
+/** A stream chosen from an add-on. The URL (or per-track URLs) point straight at the add-on's host. */
+export class AddonSource implements BookSource {
+  readonly kind = 'addon' as const;
+
+  constructor(
+    readonly id: string,
+    readonly name: string,
+    readonly mimeType: string,
+    private readonly stream: Stream,
+  ) {}
+
+  async getUrl(track?: number): Promise<string> {
+    const url = this.stream.tracks ? this.stream.tracks[track ?? 0]?.url : this.stream.url;
+    if (!url) throw new Error('This add-on stream has no URL');
+    return url;
+  }
+
+  async getBlob(): Promise<Blob> {
+    const url = await this.getUrl();
+    let res: Response;
+    try {
+      res = await fetch(url);
+    } catch {
+      // shortcut: ebooks from external add-ons are fetched by the browser, so the host must send CORS headers;
+      // upgrade path is an allow-listed server proxy (deliberately not built: no arbitrary-URL proxy).
+      throw new Error('Could not download this file. The add-on host may not allow cross-origin downloads.');
+    }
+    if (!res.ok) throw new Error(`The add-on host answered ${res.status}`);
+    return res.blob();
+  }
+
+  release(): void {}
+}
+
+/** Resolves a stored book to a BookSource. */
 export async function openSource(book: Book): Promise<BookSource> {
   const ref = book.sourceRef;
   switch (ref.kind) {
@@ -110,7 +146,8 @@ export async function openSource(book: Book): Promise<BookSource> {
       return LocalFileSource.open(ref.id);
     case 'debrid':
       return new DebridSource(ref.id, book.title, mimeFor(book.title, book.format, ''));
-    default:
-      throw new Error(`Source kind "${ref.kind}" is not implemented yet`);
+    case 'addon':
+      if (!ref.stream) throw new Error('Add-on book is missing its stream');
+      return new AddonSource(ref.id, book.title, mimeFor(book.title, book.format, ''), ref.stream);
   }
 }

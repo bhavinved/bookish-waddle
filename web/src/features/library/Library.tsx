@@ -4,11 +4,13 @@ import { useLive, useObjectUrl } from '../../app/hooks';
 import { db, deleteBook, type Book } from '../../core/db';
 import { importFiles } from './importFiles';
 import { usePlayer } from '../player/PlayerProvider';
+import { DiscoverView } from '../discover/DiscoverView';
 import { TorBoxView } from './TorBoxView';
 import styles from './library.module.css';
 
 function BookCard({ book, progress }: { book: Book; progress: number }) {
-  const cover = useObjectUrl(book.coverBlob);
+  const blobCover = useObjectUrl(book.coverBlob);
+  const cover = blobCover ?? book.coverUrl;
   const player = usePlayer();
   const href = book.format === 'audio' ? `/listen/${book.id}` : `/read/${book.id}`;
 
@@ -48,7 +50,7 @@ export function Library() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [dragging, setDragging] = useState(false);
-  const [view, setView] = useState<'mine' | 'torbox'>('mine');
+  const [view, setView] = useState<'mine' | 'discover' | 'torbox'>('mine');
 
   async function handle(files: File[]) {
     if (files.length === 0) return;
@@ -89,6 +91,9 @@ export function Library() {
           <button className={`btn ${view === 'mine' ? 'btn-primary' : ''}`} onClick={() => setView('mine')}>
             My books
           </button>
+          <button className={`btn ${view === 'discover' ? 'btn-primary' : ''}`} onClick={() => setView('discover')}>
+            Discover
+          </button>
           <button className={`btn ${view === 'torbox' ? 'btn-primary' : ''}`} onClick={() => setView('torbox')}>
             TorBox
           </button>
@@ -109,6 +114,7 @@ export function Library() {
         />
       </div>
       {view === 'torbox' && <TorBoxView />}
+      {view === 'discover' && <DiscoverView />}
       {view === 'mine' && message && <p className={styles.message}>{message}</p>}
       {view === 'mine' && items && items.length === 0 && (
         <p className={styles.empty}>Drop EPUB, PDF, TXT, MD, MP3 or M4B files here, or use “Add books”.</p>

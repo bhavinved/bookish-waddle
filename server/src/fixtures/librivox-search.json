@@ -1,0 +1,38 @@
+{
+ "books": [
+  {
+   "id": "253",
+   "title": "Pride and Prejudice",
+   "description": "<em>Pride and Prejudice</em> is the most famous of Jane Austen’s novels, and its opening is one of the most famous lines in English literature - “It is a truth universally acknowledged, that a single ",
+   "authors": [
+    {
+     "id": "155",
+     "first_name": "Jane",
+     "last_name": "Austen",
+     "dob": "1775",
+     "dod": "1817"
+    }
+   ],
+   "coverart_thumbnail": "https://archive.org/download/pride_and_prejudice_librivox/Pride_Prejudice_1104_thumb.jpg",
+   "coverart_jpg": "https://archive.org/download/pride_and_prejudice_librivox/Pride_Prejudice_1104.jpg",
+   "language": "English"
+  },
+  {
+   "id": "254",
+   "title": "Pride and Prejudice (version 2)",
+   "description": "Jane Austen’s classic novel chronicles the events in the lives of the Bennet family.  Take a family with five unmarried daughters and a lack of wealth, throw in a new wealthy neighbor or two, plus a w",
+   "authors": [
+    {
+     "id": "155",
+     "first_name": "Jane",
+     "last_name": "Austen",
+     "dob": "1775",
+     "dod": "1817"
+    }
+   ],
+   "coverart_thumbnail": "https://archive.org/download/solo_pride_librivox/Pride_Prejudice_Solo_1108_thumb.jpg",
+   "coverart_jpg": "https://archive.org/download/solo_pride_librivox/Pride_Prejudice_Solo_1108.jpg",
+   "language": "English"
+  }
+ ]
+}
