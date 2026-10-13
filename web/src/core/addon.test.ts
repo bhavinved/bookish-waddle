@@ -58,6 +58,42 @@ describe('parseMetas / parseStreams', () => {
   });
 });
 
+describe('parseStreams: externalUrl and infoHash', () => {
+  const HASH = 'a'.repeat(40);
+
+  it('accepts external links (https only) without a format', () => {
+    const streams = parseStreams({
+      streams: [
+        { name: 'Borrow', externalUrl: 'https://openlibrary.org/works/OL1W' },
+        { name: 'bad', externalUrl: 'javascript:alert(1)' },
+        { name: 'http', externalUrl: 'http://x.example' },
+      ],
+    });
+    expect(streams).toEqual([{ name: 'Borrow', externalUrl: 'https://openlibrary.org/works/OL1W' }]);
+  });
+
+  it('accepts torrent streams by 40-hex infoHash with an optional non-negative fileIdx', () => {
+    const streams = parseStreams({
+      streams: [
+        { name: 'ok', format: 'epub', infoHash: HASH, fileIdx: 2 },
+        { name: 'upper', infoHash: HASH.toUpperCase() },
+        { name: 'short', infoHash: 'abc' },
+        { name: 'nonhex', infoHash: 'z'.repeat(40) },
+        { name: 'neg', infoHash: HASH, fileIdx: -1 },
+      ],
+    });
+    expect(streams.map((s) => [s.name, s.infoHash && 'h', s.fileIdx])).toEqual([
+      ['ok', 'h', 2],
+      ['upper', 'h', undefined],
+      ['neg', 'h', undefined],
+    ]);
+  });
+
+  it('refuses to add a stream without a format directly', () => {
+    expect(() => bookFromStream('x', { id: '1', type: 'ebook', name: 'B' }, { name: 'ext', externalUrl: 'https://x.example' })).toThrow();
+  });
+});
+
 describe('normalizeBaseUrl', () => {
   it('strips manifest.json, trailing slash, query', () => {
     expect(normalizeBaseUrl(' https://a.com/addon/manifest.json?x=1 ')).toBe('https://a.com/addon');

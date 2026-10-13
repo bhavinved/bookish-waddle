@@ -1,0 +1,58 @@
+{
+ "metadata": {
+  "identifier": "pride_and_prejudice_librivox",
+  "title": "Pride and Prejudice",
+  "creator": "Jane Austen",
+  "collection": [
+   "librivoxaudio",
+   "audio_bookspoetry"
+  ]
+ },
+ "files": [
+  {
+   "name": "prideandprejudice_01-03_austen.mp3",
+   "format": "VBR MP3",
+   "source": "original",
+   "track": "1/37",
+   "length": "1133.07",
+   "title": "Chapters 1-3"
+  },
+  {
+   "name": "prideandprejudice_01-03_austen_64kb.mp3",
+   "format": "64Kbps MP3",
+   "source": "derivative",
+   "length": "18:52",
+   "title": "Chapters 1-3"
+  },
+  {
+   "name": "prideandprejudice_04-05_austen.mp3",
+   "format": "VBR MP3",
+   "source": "original",
+   "track": "2/37",
+   "length": "865.41",
+   "title": "Chapters 4-5"
+  },
+  {
+   "name": "prideandprejudice_04-05_austen_64kb.mp3",
+   "format": "64Kbps MP3",
+   "source": "derivative",
+   "length": "14:25",
+   "title": "Chapters 4-5"
+  },
+  {
+   "name": "prideandprejudice_06_austen.mp3",
+   "format": "VBR MP3",
+   "source": "original",
+   "track": "3/37",
+   "length": "777.2",
+   "title": "Chapter 6"
+  },
+  {
+   "name": "prideandprejudice_06_austen_64kb.mp3",
+   "format": "64Kbps MP3",
+   "source": "derivative",
+   "length": "12:57",
+   "title": "Chapter 6"
+  }
+ ]
+}

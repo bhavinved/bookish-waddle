@@ -1,0 +1,21 @@
+{
+ "response": {
+  "numFound": 2954,
+  "docs": [
+   {
+    "identifier": "IndustrialSocietyAndItsFuture-TheUnabombersManifesto",
+    "title": "Industrial Society and Its Future - The Unabomber's Manifesto"
+   },
+   {
+    "creator": "George Newnes (Editor)",
+    "identifier": "TheStrandMagazineAnIllustratedMonthly",
+    "title": "The Strand Magazine: An Illustrated Monthly"
+   },
+   {
+    "creator": "Doyle, Arthur Conan, 1859-1930, author",
+    "identifier": "adventuresofsher00doylrich",
+    "title": "Adventures of Sherlock Holmes"
+   }
+  ]
+ }
+}

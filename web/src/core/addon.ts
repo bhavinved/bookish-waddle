@@ -30,15 +30,20 @@ export interface Track {
   url: string;
   duration?: number;
 }
+/** A stream has `url`, `tracks`, `externalUrl` (open elsewhere) or `infoHash` (resolved through the user's debrid). */
 export interface Stream {
   name: string;
-  format: 'epub' | 'pdf' | 'txt' | 'audio';
+  /** Always set for `url` and `tracks` streams. */
+  format?: 'epub' | 'pdf' | 'txt' | 'audio';
   url?: string;
   tracks?: Track[];
+  externalUrl?: string;
+  infoHash?: string;
+  fileIdx?: number;
 }
 
 /** Built-in add-ons are served by our own server with the same protocol. */
-export const BUILTIN_ADDONS = ['/api/addons/gutenberg', '/api/addons/librivox'];
+export const BUILTIN_ADDONS = ['gutenberg', 'librivox', 'archive', 'openlibrary'].map((id) => `/api/addons/${id}`);
 
 const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
 const isStr = (x: unknown): x is string => typeof x === 'string' && x.length > 0;
@@ -94,13 +99,16 @@ export function parseMetas(x: unknown, builtin = false): Meta[] {
 }
 
 const FORMATS = ['epub', 'pdf', 'txt', 'audio'] as const;
+const INFO_HASH = /^[a-fA-F0-9]{40}$/;
 
 export function parseStreams(x: unknown, builtin = false): Stream[] {
   if (!isObj(x) || !Array.isArray(x.streams)) return [];
   return x.streams.flatMap((s): Stream[] => {
-    if (!isObj(s) || !FORMATS.includes(s.format as never)) return [];
-    const format = s.format as Stream['format'];
-    const name = optStr(s.name) ?? format;
+    if (!isObj(s)) return [];
+    const format = FORMATS.find((f) => f === s.format);
+    const name = optStr(s.name) ?? format ?? 'Stream';
+    const externalUrl = safeUrl(s.externalUrl, false);
+    if (externalUrl) return [{ name, externalUrl }];
     const tracks = Array.isArray(s.tracks)
       ? s.tracks.flatMap((t): Track[] => {
           const url = isObj(t) ? safeUrl(t.url, builtin) : undefined;
@@ -111,7 +119,12 @@ export function parseStreams(x: unknown, builtin = false): Stream[] {
       : [];
     const url = safeUrl(s.url, builtin);
     if (format === 'audio' && tracks.length > 0) return [{ name, format, tracks }];
-    return url ? [{ name, format, url }] : [];
+    if (url) return format ? [{ name, format, url }] : [];
+    if (typeof s.infoHash === 'string' && INFO_HASH.test(s.infoHash)) {
+      const fileIdx = Number.isInteger(s.fileIdx) && (s.fileIdx as number) >= 0 ? (s.fileIdx as number) : undefined;
+      return [{ name, format, infoHash: s.infoHash, fileIdx }];
+    }
+    return [];
   });
 }
 
@@ -160,6 +173,7 @@ export function bookFromStream(
 ): { sourceRef: SourceRef; fields: Omit<Book, 'id' | 'sourceRef' | 'addedAt' | 'lastOpenedAt'> } {
   const base = { title: meta.name, author: meta.author ?? '', coverUrl: meta.poster };
   const sourceRef: SourceRef = { kind: 'addon', id: `${addonId}/${meta.id}`, stream };
+  if (!stream.format) throw new Error('This stream cannot be added directly');
   if (stream.format !== 'audio' || !stream.tracks) return { sourceRef, fields: { ...base, format: stream.format } };
   let start = 0;
   const chapters = stream.tracks.map((t) => {

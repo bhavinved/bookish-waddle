@@ -1,0 +1,34 @@
+{
+ "metadata": {
+  "identifier": "bwb_Y0-DRV-807",
+  "title": "The complete sherlock holmes",
+  "collection": [
+   "internetarchivebooks",
+   "printdisabled",
+   "inlibrary"
+  ],
+  "access-restricted-item": "true"
+ },
+ "files": [
+  {
+   "name": "bwb_Y0-DRV-807.epub",
+   "format": "EPUB",
+   "source": "derivative"
+  },
+  {
+   "name": "bwb_Y0-DRV-807.lcpdf",
+   "format": "LCP Encrypted PDF",
+   "source": "derivative"
+  },
+  {
+   "name": "bwb_Y0-DRV-807.pdf",
+   "format": "Text PDF",
+   "source": "derivative"
+  },
+  {
+   "name": "bwb_Y0-DRV-807_lcp.epub",
+   "format": "LCP Encrypted EPUB",
+   "source": "derivative"
+  }
+ ]
+}

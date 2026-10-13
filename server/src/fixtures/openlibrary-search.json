@@ -1,0 +1,57 @@
+{
+ "numFound": 11454,
+ "docs": [
+  {
+   "author_name": [
+    "Arthur Conan Doyle"
+   ],
+   "cover_i": 6717853,
+   "ebook_access": "public",
+   "ia": [
+    "adventureofsherl0000unse",
+    "adventuresofsher0000cona_u1c7",
+    "aventurasdesherlockholmes_2110_librivox",
+    "adventuresofsher00doylrich"
+   ],
+   "key": "/works/OL262421W",
+   "title": "The Adventures of Sherlock Holmes [12 stories]"
+  },
+  {
+   "author_name": [
+    "Maria Konnikova"
+   ],
+   "cover_i": 10211101,
+   "ebook_access": "borrowable",
+   "ia": [
+    "comopensarcomosh0000konn",
+    "mastermindhowtot0000konn"
+   ],
+   "key": "/works/OL19549765W",
+   "title": "Mastermind"
+  },
+  {
+   "author_name": [
+    "Anthony Horowitz"
+   ],
+   "cover_i": 8345964,
+   "ebook_access": "printdisabled",
+   "ia": [
+    "sizhiwuhouseofsi0000horo",
+    "houseofsilk0000horo_c5j9",
+    "houseofsilk0000horo_t4u5",
+    "houseofsilk0000horo"
+   ],
+   "key": "/works/OL16221914W",
+   "title": "The House of Silk"
+  },
+  {
+   "author_name": [
+    "Arthur Conan Doyle"
+   ],
+   "ebook_access": "no_ebook",
+   "key": "/works/OL1518223W",
+   "title": "The Oxford Sherlock Holmes (Adventures of Sherlock Holmes / Case-Book of Sherlock Holmes / His Last Hour / Hound of the Baskervilles / Memoirs of Sherlock Holmes / Return of Sherlock Holmes / Sign of Four / Study in Scarlet / Valley of Fear)",
+   "ia": []
+  }
+ ]
+}

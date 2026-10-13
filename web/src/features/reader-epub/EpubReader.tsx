@@ -37,13 +37,32 @@ export function EpubReader({ book, source, initial }: ReaderProps) {
     if (!el) return;
     let disposed = false;
     const epub = ePub();
+    // epub.js reports open/render failures through events and promises we do not await; surface all of them.
+    const fail = (e: unknown) => {
+      if (!disposed) setError(`This EPUB couldn't be opened: ${e instanceof Error ? e.message : String(e)}`);
+    };
+    epub.on('openFailed', fail);
     (async () => {
       const blob = await source.getBlob();
       const buf = await blob.arrayBuffer();
       if (disposed) return;
-      epub.open(buf, 'binary');
+      epub.open(buf, 'binary').catch(fail);
+      // Some EPUBs make epub.js throw while loading a section, inside promise chains whose result nothing awaits (the
+      // reader just stays blank, `displayerror` never fires). Every section/resource load goes through book.load.
+      const load = epub.load.bind(epub);
+      epub.load = (path: string) => {
+        try {
+          const loading = load(path);
+          loading.catch(fail);
+          return loading;
+        } catch (e) {
+          fail(e);
+          throw e;
+        }
+      };
       const r = epub.renderTo(el, { width: '100%', height: '100%', flow: 'paginated', spread: 'auto' });
       rendition.current = r;
+      r.on('displayerror', fail);
       r.themes.register('light', { body: PALETTE.light });
       r.themes.register('dark', { body: PALETTE.dark });
       r.themes.select(themeRef.current);
@@ -79,7 +98,7 @@ export function EpubReader({ book, source, initial }: ReaderProps) {
       await epub.locations.generate(1600);
       if (disposed) return;
       locationsReady = true;
-    })().catch((e) => !disposed && setError(e instanceof Error ? e.message : String(e)));
+    })().catch(fail);
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') void rendition.current?.next();

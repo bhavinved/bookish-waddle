@@ -1,16 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { useLive } from '../../app/hooks';
-import {
-  bookFromStream,
-  fetchManifest,
-  getStreams,
-  normalizeBaseUrl,
-  searchCatalog,
-  type Meta,
-  type Stream,
-} from '../../core/addon';
-import { addRemoteBook, db } from '../../core/db';
+import { useState, type FormEvent } from 'react';
+import { fetchManifest, normalizeBaseUrl, searchCatalog, type Meta } from '../../core/addon';
+import { db } from '../../core/db';
 import styles from '../library/library.module.css';
+import { StreamPicker } from './StreamPicker';
 import { useAddons, type AddonEntry } from './useAddons';
 
 interface Group {
@@ -30,55 +22,6 @@ function ResultCard({ meta, onPick }: { meta: Meta; onPick: () => void }) {
         <div className={styles.author}>{meta.author || ' '}</div>
       </button>
     </li>
-  );
-}
-
-function StreamPicker({ addon, meta, onClose }: { addon: AddonEntry; meta: Meta; onClose: () => void }) {
-  const [streams, setStreams] = useState<Stream[] | null>(null);
-  const [error, setError] = useState('');
-  const added = useLive(async () => {
-    const prefix = `${addon.manifest?.id}/${meta.id}`;
-    return (await db.books.toArray()).some((b) => b.sourceRef.kind === 'addon' && b.sourceRef.id === prefix);
-  }, [meta.id]);
-
-  useEffect(() => {
-    getStreams(addon.baseUrl, meta)
-      .then(setStreams)
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
-  }, [addon.baseUrl, meta]);
-
-  async function add(stream: Stream) {
-    const { sourceRef, fields } = bookFromStream(addon.manifest!.id, meta, stream);
-    await addRemoteBook(sourceRef, fields);
-  }
-
-  return (
-    <div className={styles.panel}>
-      <div className={styles.toolbar}>
-        <strong>{meta.name}</strong>
-        <button className="btn" onClick={onClose}>
-          Close
-        </button>
-      </div>
-      {meta.description && <p className={styles.author}>{meta.description.slice(0, 400)}</p>}
-      {error && <p className={styles.message}>{error}</p>}
-      {streams === null && !error && <p className={styles.message}>Loading streams…</p>}
-      {streams?.length === 0 && <p className={styles.message}>This add-on has no playable stream for this title.</p>}
-      <ul className={styles.rows}>
-        {streams?.map((s, i) => (
-          <li key={i} className={styles.row}>
-            <span className={styles.rowName}>{s.name}</span>
-            <span className={styles.author}>
-              {s.format.toUpperCase()}
-              {s.tracks ? ` · ${s.tracks.length} tracks` : ''}
-            </span>
-            <button className="btn" disabled={added} onClick={() => void add(s)}>
-              {added ? 'Added' : 'Add'}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

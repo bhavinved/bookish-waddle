@@ -1,0 +1,31 @@
+{
+ "metadata": {
+  "identifier": "adventuresofsher00doyl",
+  "title": "Adventures of Sherlock Holmes",
+  "creator": "Doyle, Arthur Conan, Sir, 1859-1930",
+  "collection": [
+   "internetarchivebooks",
+   "americana"
+  ]
+ },
+ "files": [
+  {
+   "name": "adventuresofsher00doyl.epub",
+   "format": "EPUB",
+   "source": "derivative",
+   "size": "1528444"
+  },
+  {
+   "name": "adventuresofsher00doyl.pdf",
+   "format": "Text PDF",
+   "source": "derivative",
+   "size": "18394178"
+  },
+  {
+   "name": "adventuresofsher00doyl_meta.xml",
+   "format": "Metadata",
+   "source": "original",
+   "size": "2620"
+  }
+ ]
+}

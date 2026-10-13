@@ -7,6 +7,32 @@ const FILE_ROUTE = /^\/api\/debrid\/file\/([a-z]+)\/(\d{1,12})\/(\d{1,12})$/;
 // Headers copied from the upstream response so <audio> seeking works.
 const PASS_THROUGH = ['content-type', 'content-length', 'content-range', 'accept-ranges'];
 
+const INFO_HASH = /^[a-fA-F0-9]{40}$/;
+
+/** POST /api/debrid/resolve { infoHash, fileIdx?, send? }. JSON-only: a cross-origin page cannot send this without a CORS preflight, which we never answer. */
+async function resolveRoute(req: IncomingMessage, res: ServerResponse, provider: DebridProvider | null) {
+  if (!req.headers['content-type']?.startsWith('application/json')) return json(res, 415, { error: 'json_required' });
+  if (!provider) return json(res, 503, { error: 'not_configured' });
+  let raw = '';
+  for await (const chunk of req) {
+    raw += chunk;
+    if (raw.length > 2048) return json(res, 413, { error: 'too_large' });
+  }
+  let body: { infoHash?: unknown; fileIdx?: unknown; send?: unknown };
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return json(res, 400, { error: 'bad_json' });
+  }
+  const { infoHash, fileIdx, send } = body ?? {};
+  if (typeof infoHash !== 'string' || !INFO_HASH.test(infoHash)) return json(res, 400, { error: 'bad_params' });
+  if (fileIdx !== undefined && !(Number.isInteger(fileIdx) && (fileIdx as number) >= 0 && (fileIdx as number) < 100000)) {
+    return json(res, 400, { error: 'bad_params' });
+  }
+  if (send !== undefined && typeof send !== 'boolean') return json(res, 400, { error: 'bad_params' });
+  json(res, 200, await provider.resolveInfoHash(infoHash, fileIdx as number | undefined, send as boolean | undefined));
+}
+
 /** `provider` is null when no API key is configured. */
 export function createHandler(provider: DebridProvider | null, fetchFn: typeof fetch = fetch) {
   const addons = createAddonHandler(fetchFn);
@@ -16,6 +42,7 @@ export function createHandler(provider: DebridProvider | null, fetchFn: typeof f
       const host = new URL(`http://${req.headers.host ?? ''}`).hostname;
       if (host !== 'localhost' && host !== '127.0.0.1') return json(res, 403, { error: 'forbidden_host' });
       const path = new URL(req.url ?? '/', 'http://localhost').pathname;
+      if (req.method === 'POST' && path === '/api/debrid/resolve') return await resolveRoute(req, res, provider);
       if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
 
       if (await addons(req, res, new URL(req.url ?? '/', 'http://localhost'))) return;

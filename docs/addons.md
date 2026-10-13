@@ -49,19 +49,39 @@ below. A trailing `/manifest.json` or `/` on the pasted URL is ignored.
 ] }
 ```
 
-- `format` is `epub`, `pdf`, `txt` or `audio`.
-- A stream has either `url` (single file) or `tracks` (multi-file audiobook, played in order; `duration` in
-  seconds is optional but gives better progress).
+A stream has exactly one of: `url`, `tracks`, `externalUrl` or `infoHash`.
+
+- `format` is `epub`, `pdf`, `txt` or `audio`. Required for `url` and `tracks` streams.
+- `url`: a single file.
+- `tracks`: a multi-file audiobook, played in order (`duration` in seconds is optional but gives better progress).
 - Ebook `url`s are fetched by the browser, so that host must also allow CORS. Audio is played through an `<audio>`
   element, which does not need CORS.
-- URLs must be `https://`.
+- `externalUrl`: the title cannot be added (e.g. borrow-only). The app shows an "Open" link that opens it in a new
+  tab and no "Add" button.
+- `infoHash` (40 hex characters), optional `fileIdx` (0-based file index inside the torrent) and `name`: a Stremio-style
+  torrent stream. It is resolved through the user's own TorBox account, never by the add-on. The app adds
+  "Add via TorBox" when TorBox is configured; if the torrent is not cached it offers "Send to TorBox" instead.
+  Without `fileIdx`, the first supported book/audio file is used.
+- `url`, `tracks` and `externalUrl` must be `https://`.
+
+```json
+{ "streams": [
+  { "name": "Borrow on Open Library", "externalUrl": "https://openlibrary.org/works/OL1W" },
+  { "name": "Torrent", "infoHash": "0123456789abcdef0123456789abcdef01234567", "fileIdx": 1 }
+] }
+```
 
 ## Built-in add-ons
 
-`gutenberg` (Gutendex search, EPUB served through `/api/addons/gutenberg/file/:id` because gutenberg.org has no
-CORS headers) and `librivox` (LibriVox API, per-section MP3 `tracks` on archive.org) are served by our own server
-under `/api/addons/<id>/` using this same protocol. They are always installed and cannot be removed.
+Served by our own server under `/api/addons/<id>/` using this same protocol. Always installed, cannot be removed.
+
+| id | Source | Notes |
+|----|--------|-------|
+| `gutenberg` | Project Gutenberg OPDS search | EPUB served through `/api/addons/gutenberg/file/:id` (no CORS upstream) |
+| `librivox` | LibriVox API | per-section MP3 `tracks` on archive.org |
+| `archive` | Internet Archive | ebook + audiobook catalogs; lending-only items are excluded; ebook files go through `/api/addons/archive/file/:identifier/:filename` (no CORS upstream), only for files listed in the item's metadata; audio uses the original MP3s as `tracks` |
+| `openlibrary` | Open Library | ebooks only; free-to-read works reuse the `archive` streams, borrow-only works return an `externalUrl` |
 
 ## Not yet supported
 
-Catalog paging in the UI, add-on-provided TXT/PDF special handling, and streams that resolve through debrid.
+Catalog paging in the UI and add-on-provided TXT/PDF special handling.

@@ -1,0 +1,22 @@
+{
+ "metadata": {
+  "identifier": "theadventuresofs01661gut",
+  "title": "The Adventures of Sherlock Holmes",
+  "creator": "Doyle, Arthur Conan, Sir, 1859-1930",
+  "collection": "gutenberg"
+ },
+ "files": [
+  {
+   "name": "pg1661.epub",
+   "format": "EPUB",
+   "source": "original",
+   "size": "267854"
+  },
+  {
+   "name": "theadventuresofs01661gut_meta.xml",
+   "format": "Metadata",
+   "source": "original",
+   "size": "1983"
+  }
+ ]
+}
