@@ -1,4 +1,5 @@
-import { db } from './db';
+import { db, type Book } from './db';
+import { mimeFor } from './formats';
 
 /**
  * Where a book's bytes come from. Readers and the player consume ONLY this interface; they never touch
@@ -65,11 +66,50 @@ export class LocalFileSource implements BookSource {
   }
 }
 
-/** Resolves a stored book's `sourceRef` to a BookSource. M2/M3 extend this switch. */
-export async function openSource(ref: { kind: BookSource['kind']; id: string }): Promise<BookSource> {
+/**
+ * A file inside the user's debrid account, streamed through our server (`/api/debrid/file/...`), which keeps the
+ * API key server-side and forwards Range requests. `id` is `kind/itemId/fileId`.
+ */
+export class DebridSource implements BookSource {
+  readonly kind = 'debrid' as const;
+
+  constructor(
+    readonly id: string,
+    readonly name: string,
+    readonly mimeType: string,
+    readonly size?: number,
+  ) {}
+
+  /** Same-origin URL; the browser streams it with Range requests, so audio can seek without a full download. */
+  async getUrl(): Promise<string> {
+    return `/api/debrid/file/${this.id}`;
+  }
+
+  async getBlob(): Promise<Blob> {
+    let res: Response;
+    try {
+      res = await fetch(await this.getUrl());
+    } catch {
+      throw new Error('Could not reach the server. Is it running?');
+    }
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(`Could not load file from TorBox (${body?.error ?? res.status}). The link may have expired.`);
+    }
+    return res.blob();
+  }
+
+  release(): void {}
+}
+
+/** Resolves a stored book to a BookSource. M3 extends this switch for add-ons. */
+export async function openSource(book: Book): Promise<BookSource> {
+  const ref = book.sourceRef;
   switch (ref.kind) {
     case 'local':
       return LocalFileSource.open(ref.id);
+    case 'debrid':
+      return new DebridSource(ref.id, book.title, mimeFor(book.title, book.format, ''));
     default:
       throw new Error(`Source kind "${ref.kind}" is not implemented yet`);
   }

@@ -4,6 +4,7 @@ import { useLive, useObjectUrl } from '../../app/hooks';
 import { db, deleteBook, type Book } from '../../core/db';
 import { importFiles } from './importFiles';
 import { usePlayer } from '../player/PlayerProvider';
+import { TorBoxView } from './TorBoxView';
 import styles from './library.module.css';
 
 function BookCard({ book, progress }: { book: Book; progress: number }) {
@@ -47,6 +48,7 @@ export function Library() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [dragging, setDragging] = useState(false);
+  const [view, setView] = useState<'mine' | 'torbox'>('mine');
 
   async function handle(files: File[]) {
     if (files.length === 0) return;
@@ -83,6 +85,14 @@ export function Library() {
     >
       <div className={styles.toolbar}>
         <h1>Library</h1>
+        <div className={styles.tabs}>
+          <button className={`btn ${view === 'mine' ? 'btn-primary' : ''}`} onClick={() => setView('mine')}>
+            My books
+          </button>
+          <button className={`btn ${view === 'torbox' ? 'btn-primary' : ''}`} onClick={() => setView('torbox')}>
+            TorBox
+          </button>
+        </div>
         <button className="btn btn-primary" onClick={() => input.current?.click()} disabled={busy}>
           {busy ? 'Importing…' : 'Add books'}
         </button>
@@ -98,13 +108,18 @@ export function Library() {
           }}
         />
       </div>
-      {message && <p className={styles.message}>{message}</p>}
-      {items && items.length === 0 && (
+      {view === 'torbox' && <TorBoxView />}
+      {view === 'mine' && message && <p className={styles.message}>{message}</p>}
+      {view === 'mine' && items && items.length === 0 && (
         <p className={styles.empty}>Drop EPUB, PDF, TXT, MD, MP3 or M4B files here, or use “Add books”.</p>
       )}
-      <ul className={styles.grid}>
-        {items?.map(({ book, progress }) => <BookCard key={book.id} book={book} progress={progress} />)}
-      </ul>
+      {view === 'mine' && (
+        <ul className={styles.grid}>
+          {items?.map(({ book, progress }) => (
+            <BookCard key={book.id} book={book} progress={progress} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

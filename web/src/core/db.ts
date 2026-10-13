@@ -99,6 +99,17 @@ export async function addLocalBook(file: Blob, meta: NewLocalBook): Promise<Book
   return book;
 }
 
+/** Adds a book whose bytes stay remote (debrid); nothing is copied into IndexedDB. */
+export async function addRemoteBook(
+  sourceRef: SourceRef,
+  meta: Omit<Book, 'id' | 'sourceRef' | 'addedAt' | 'lastOpenedAt'>,
+): Promise<Book> {
+  const now = Date.now();
+  const book: Book = { ...meta, id: newId(), sourceRef, addedAt: now, lastOpenedAt: now };
+  await db.books.add(book);
+  return book;
+}
+
 export async function deleteBook(bookId: string): Promise<void> {
   await db.transaction('rw', db.books, db.files, db.progress, async () => {
     const book = await db.books.get(bookId);

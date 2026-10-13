@@ -141,7 +141,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         if (bookRef.current) persist();
         const b = await db.books.get(bookId);
         if (!b || b.format !== 'audio') throw new Error('Audiobook not found');
-        const source = await openSource(b.sourceRef);
+        const source = await openSource(b);
         const url = await source.getUrl();
         if (token !== loadTokenRef.current) {
           source.release();
@@ -193,7 +193,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setPlaying(false);
       persist();
     };
-    const onErr = () => setError('Could not play this file');
+    const onErr = () => setError('Could not play this file (is the server running, or has the link expired?)');
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
     audio.addEventListener('durationchange', onMeta);

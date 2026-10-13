@@ -26,7 +26,7 @@ export function ReaderRoute() {
     (async () => {
       const book = await db.books.get(id);
       if (!book) throw new Error('Book not found');
-      source = await openSource(book.sourceRef);
+      source = await openSource(book);
       const initial = await getProgress(id);
       if (cancelled) return source.release();
       void touchBook(id);
