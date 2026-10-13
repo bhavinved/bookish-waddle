@@ -1,0 +1,68 @@
+.reader {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+
+.bar .title {
+  flex: 1;
+  min-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.status {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+}
+
+.drawer {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: min(320px, 85%);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: auto;
+  z-index: 5;
+  padding: 0.5rem;
+}
+
+.drawer button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0.45rem 0.5rem;
+  border-radius: 6px;
+}
+
+.drawer button:hover {
+  background: var(--surface-2);
+}
+
+.error {
+  padding: 1rem;
+  color: var(--danger);
+}

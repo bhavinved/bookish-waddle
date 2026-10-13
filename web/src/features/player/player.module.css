@@ -1,0 +1,128 @@
+.page {
+  width: min(560px, 100%);
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cover {
+  width: min(260px, 70%);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.title {
+  margin: 0;
+  text-align: center;
+  font-size: 1.3rem;
+}
+
+.author,
+.muted {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.author {
+  text-align: center;
+}
+
+.scrubber {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.times {
+  display: flex;
+  justify-content: space-between;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.playBtn {
+  min-width: 96px;
+  min-height: 48px;
+}
+
+.rate {
+  align-self: center;
+}
+
+.chapters {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.chapters button {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+}
+
+.chapters button:hover {
+  background: var(--surface-2);
+}
+
+.activeChapter {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.mini {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.miniInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+
+.miniInfo strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

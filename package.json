@@ -1,0 +1,13 @@
+{
+  "name": "bookish-waddle",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["web"],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "npm run dev -w web",
+    "build": "npm run build -w web",
+    "test": "npm run test -w web",
+    "lint": "npm run lint -w web"
+  }
+}
